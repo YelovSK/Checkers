@@ -1,0 +1,1 @@
+white 345 ai white 0/7/black/k 1/2/black/k 1/6/black/n 2/7/black/k 3/4/white/k 3/6/black/n 4/7/black/k 5/6/black/n 6/1/black/k 6/7/black/k 7/6/black/n 

@@ -1,0 +1,1 @@
+black 149 player black 0/5/white/n 1/0/black/n 1/2/black/n 2/1/white/n 2/3/white/n 2/5/white/n 3/0/black/n 3/4/white/n 3/6/black/k 4/1/black/n 4/3/white/n 5/0/black/n 6/1/white/k 6/5/white/n 6/7/black/k 7/2/black/n 

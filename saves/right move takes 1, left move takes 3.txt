@@ -1,0 +1,1 @@
+black 221 player white 0/3/white/n 1/0/black/n 3/0/white/k 4/1/black/n 4/3/black/k 4/5/black/n 5/0/black/n 5/2/white/k 6/3/black/n 6/5/black/k 
