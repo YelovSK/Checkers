@@ -1,4 +1,4 @@
-﻿from model import Checkers, Position
+﻿from model import Checkers, Position, PieceType
 from view import TkView
 
 
@@ -15,6 +15,18 @@ class Controller:
         self.view.start_main_loop()
 
     def handle_click(self, position: Position):
+        self.view.clear_highlights()
+
+        piece = self.checkers.board.get_piece(position)
+        if piece is None:
+            return
+
+        if piece.piece_type == PieceType.EMPTY:
+            return
+
+        piece.select()
+        moves = self.checkers.get_valid_moves(position)
+        self.view.highlight_fields(list(moves.keys()))
+        self.view.highlight_piece(position)
         print(position)
         print("pojebal som ti mamku kokotko")
-        pass

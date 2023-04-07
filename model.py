@@ -18,8 +18,12 @@ class Piece:
     def __init__(self, piece_type: PieceType, king: bool = False):
         self.piece_type = piece_type
         self.king = king
+        self.selected = False
 
-    def moves(self, jump_length=1) -> list[Position]:
+    def get_possible_moves(self, jump_length=1) -> list[Position]:
+        """
+        :return: list of all positions 1 or 2 fields away from the piece
+        """
         result: list[Position] = []
         if jump_length not in (1, 2):
             return result
@@ -39,7 +43,13 @@ class Piece:
 
         return result
 
-    def enemy_type(self) -> PieceType:
+    def select(self):
+        self.selected = True
+
+    def deselect(self):
+        self.selected = False
+
+    def get_enemy_type(self) -> PieceType:
         if self.piece_type == PieceType.WHITE:
             return PieceType.BLACK
         elif self.piece_type == PieceType.BLACK:
@@ -52,6 +62,9 @@ class Piece:
 class Position:
     row: int
     column: int
+
+    def __hash__(self):
+        return hash((self.row, self.column))
 
 
 class Board:
@@ -102,6 +115,16 @@ class Board:
         except IndexError:
             raise InvalidBoardCell()
 
+    def get_selected(self) -> list[Position]:
+        result = []
+        for row in range(self.SIZE):
+            for column in range(self.SIZE):
+                position = Position(row, column)
+                if self.get_piece(position).selected:
+                    result.append(position)
+
+        return result
+
 
 class Checkers:
 
@@ -125,18 +148,18 @@ class Checkers:
             return False
 
         # Move to an empty neighbouring cell
-        for position in from_piece.moves(jump_length=1):
+        for position in from_piece.get_possible_moves(jump_length=1):
             if self.board.get_piece(position).piece_type == PieceType.EMPTY:
                 return True
 
         # Move over an enemy piece
-        for position in from_piece.moves(jump_length=2):
+        for position in from_piece.get_possible_moves(jump_length=2):
             if self.board.get_piece(position).piece_type != PieceType.EMPTY:
                 continue
 
             piece_between = self.board.get_piece_between(from_position, to_position)
             # The piece between is an enemy piece
-            if piece_between.piece_type == from_piece.enemy_type():
+            if piece_between.piece_type == from_piece.get_enemy_type():
                 return True
 
         return False
@@ -153,15 +176,16 @@ class Checkers:
         except InvalidBoardCell:
             return moves
 
-        for position in piece.moves(jump_length=1):
+        for position in piece.get_possible_moves(jump_length=1):
             to_position = Position(piece_position.row + position.row, piece_position.column + position.column)
             if self.is_move_valid(piece_position, to_position):
                 moves[to_position] = []
 
         def long_jump(position: Position, prev=[]):  # rekurzivne najde tahy a vyhodene figurky 
             piece = self.board.get_piece(position)
-            for x, y, in piece.moves(jump_length=2):
-                to_position = Position(position.row + x, position.column + y)
+
+            for move in piece.get_possible_moves(jump_length=2):
+                to_position = Position(position.row + move.row, position.column + move.column)
                 if not self.is_move_valid(position, to_position):
                     continue
 

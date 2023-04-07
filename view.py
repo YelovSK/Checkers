@@ -24,6 +24,13 @@ class TkView:
     LIGHT_PIECE_COLOR = '#ffffff'
     DARK_PIECE_COLOR = '#000000'
 
+    def __init__(self):
+        self.root = None
+        self.canvas = None
+        # Canvas objects
+        self.highlights: list[int] = []
+        self.pieces: list[int] = []
+
     def setup(self, controller) -> None:
         # Root
         self.root = tk.Tk()
@@ -90,9 +97,11 @@ class TkView:
         canvas_coords = self._get_field_coords(coords)
         offset = (self.FIELD_SIZE - self.PIECE_SIZE) / 2
 
-        self.canvas.create_oval(canvas_coords.x + offset, canvas_coords.y + offset,
-                                canvas_coords.x + self.PIECE_SIZE + offset, canvas_coords.y + self.PIECE_SIZE + offset,
-                                fill=color, outline="")
+        oval = self.canvas.create_oval(canvas_coords.x + offset, canvas_coords.y + offset,
+                                       canvas_coords.x + self.PIECE_SIZE + offset,
+                                       canvas_coords.y + self.PIECE_SIZE + offset,
+                                       fill=color, outline="")
+        self.pieces.append(oval)
 
     def _get_field_coords(self, position: Position) -> Coords:
         return Coords(position.column * self.FIELD_SIZE, position.row * self.FIELD_SIZE)
@@ -107,6 +116,30 @@ class TkView:
         return self.LIGHT_FIELD_COLOR if (position.row + position.column) % 2 == 0 else self.DARK_FIELD_COLOR
 
     def _get_field_position(self, coords: Coords) -> Position:
-        return Position(coords.y // self.FIELD_SIZE, coords.x // self.FIELD_SIZE)
+        return Position(int(coords.y // self.FIELD_SIZE), int(coords.x // self.FIELD_SIZE))
 
     # endregion Private methods
+    def highlight_fields(self, positions: list[Position]) -> None:
+        for position in positions:
+            canvas_coords = self._get_field_coords(position)
+
+            rectangle = self.canvas.create_rectangle(canvas_coords.x, canvas_coords.y,
+                                                     canvas_coords.x + self.FIELD_SIZE,
+                                                     canvas_coords.y + self.FIELD_SIZE,
+                                                     fill='', outline='red', width=3)
+            self.highlights.append(rectangle)
+
+    def highlight_piece(self, position: Position) -> None:
+        canvas_coords = self._get_field_coords(position)
+        offset = (self.FIELD_SIZE - self.PIECE_SIZE) / 2
+
+        oval = self.canvas.create_oval(canvas_coords.x + offset, canvas_coords.y + offset,
+                                       canvas_coords.x + self.PIECE_SIZE + offset,
+                                       canvas_coords.y + self.PIECE_SIZE + offset,
+                                       fill='', outline='red', width=2)
+        self.highlights.append(oval)
+
+    def clear_highlights(self) -> None:
+        for highlight in self.highlights:
+            self.canvas.delete(highlight)
+        self.highlights.clear()
