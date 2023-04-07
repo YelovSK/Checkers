@@ -311,7 +311,7 @@ class Board():
                     self.board[piece.x][piece.y] = None
                     if value:
                         for remove in value:
-                            self.board[remove.x][remove.y] = None
+                            self.board[remove.row][remove.column] = None
                     # ^^ docasne upravene rozmiestnenie figurok (pre kroky dopredu)
                     score -= threatened_num(self.board[key[0]][key[1]]) * 0.75
                     self.board[key[0]][key[1]].delete()
@@ -319,7 +319,7 @@ class Board():
                     self.board[key[0]][key[1]] = None
                     if value:
                         for remove in value:
-                            self.board[remove.x][remove.y] = remove
+                            self.board[remove.row][remove.column] = remove
                     # ^^ rozmiestnenie sa vratilo
                     moves.append(((piece.x, piece.y), key, score, value)) # (from.x, from.y), (to.x, to.y), score
 
@@ -327,7 +327,7 @@ class Board():
             takes = ''
             if move[3]:
                 for i in move[3]:
-                    takes += f'({i.x}, {i.y}) '
+                    takes += f'({i.row}, {i.column}) '
             else:
                 takes = 'None'
             print(f'From: {move[0]} | To: {move[1]} | Score: {move[2]} | Takes: {takes}')
@@ -371,7 +371,7 @@ class Board():
 
         if best_choice[2]:
             for rem in best_choice[2]:
-                self.board[rem.x][rem.y] = None
+                self.board[rem.row][rem.column] = None
                 rem.delete()
                 del rem
 
@@ -381,7 +381,7 @@ class Board():
 
     def click(self, event):
         'stara sa o klikanie myšou (oznacenie, odznacenie, spravenie tahu, AI spravi dalsi tah)'
-        field = self.field_index(event.x, event.y)
+        field = self.field_index(event.row, event.column)
         if not field:
             return
         elif self.ai and (self.side != self.move_side):
@@ -401,7 +401,7 @@ class Board():
                 remove = self.moves[(x, y)]
                 if remove:
                     for rem in remove:
-                        self.board[rem.x][rem.y] = None
+                        self.board[rem.row][rem.column] = None
                         rem.delete()
                         del rem
                 self.board[self.selected.x][self.selected.y] = None
@@ -441,11 +441,11 @@ class Board():
                 return False
 
         if selected.side == 'black':
-            if selected.y == 7 and not selected.king:
+            if selected.column == 7 and not selected.king:
                 return False
             shift = (1,)
         else:
-            if selected.y == 0 and not selected.king:
+            if selected.column == 0 and not selected.king:
                 return False
             shift = (-1,)
         if selected.king:
@@ -453,21 +453,21 @@ class Board():
 
         for i in (-1, 1):
             for j in shift:
-                if y-j == selected.y and x+i == selected.x: # klikol som na prazdne v okolí 1
+                if y-j == selected.column and x+i == selected.row: # klikol som na prazdne v okolí 1
                     return (x, y)
 
-        def bet_coor(axis): # poličko v strede 2 policok
-            a = selected.x if axis == 'x' else selected.y
+        def between_coords(axis): # poličko v strede 2 policok
+            a = selected.row if axis == 'x' else selected.column
             b = x if axis == 'x' else y
             return int(a+((b-a)//2))
 
-        piece = self.board[bet_coor('x')][bet_coor('y')]
+        piece = self.board[between_coords('x')][between_coords('y')]
         threatened = self.threatened(piece)
 
         if not threatened:    # Piece medzi mnou a prazdnym nie je ohrozena
             return False
 
-        if (selected.x, selected.y) in threatened:    # ak moja Piece ohrozovala figurku medzi
+        if (selected.row, selected.column) in threatened:    # ak moja Piece ohrozovala figurku medzi
             return (x, y), piece
 
     def valid_moves(self, field, highlight=True):
@@ -487,7 +487,7 @@ class Board():
                     if not field:
                         pass
                     else:
-                        move = self.valid(field, (field.x+i, field.y+j))
+                        move = self.valid(field, (field.row + i, field.column + j))
                         if move:
                             x, y = move[0][0], move[0][1]
                             moves[move[0]] = [move[1]]+prev
@@ -524,7 +524,7 @@ class Board():
         'vrati figurky, ktoe ohrozuju figurku (iba okolo +-1)'
         if not piece:
             return False
-        x, y = piece.x, piece.y
+        x, y = piece.row, piece.column
         if x in (0, 7) or y in (0, 7):
             return False
         opponent = 'white' if piece.side == 'black' else 'black'
@@ -534,7 +534,7 @@ class Board():
                 op = self.board[x+i][y+j]  # ten co ohrozuje
                 if op and op.side == opponent and not self.board[x-i][y-j]:   # ci je prazdny na druhej strane
                     if not op.king:
-                        if not (piece.side == 'white' and op.y > piece.y) and not (piece.side == 'black' and op.y < piece.y):
+                        if not (piece.side == 'white' and op.y > piece.column) and not (piece.side == 'black' and op.y < piece.column):
                             out.append((x+i, y+j))
                     else:
                         out.append((x+i, y+j))   # coords toho co ohrozuje
