@@ -1,4 +1,4 @@
-﻿from model import Checkers, Position, Side
+﻿from model import Checkers, Position
 from view import TkView
 
 
@@ -15,43 +15,45 @@ class Controller:
         self.view.start_main_loop()
 
     def handle_click(self, click_position: Position):
+        #### TMP
+        # moves = self.checkers.get_all_valid_moves(self.checkers.side_to_move)
+        # move = self.checkers.get_best_move(moves)
+        # self.checkers.apply_move(move)
+        # self.view.draw_pieces(self.checkers.board)
+        # return
+        #### TMP
+
         self.view.clear_highlights()
 
-        # Should not be possible to click outside of the board, but just in case
-        try:
-            piece = self.checkers.board.get_piece(click_position)
-        except IndexError:
-            return
+        piece = self.checkers.board.get_piece(click_position)
 
-        if not self.checkers.board.selected:
+        # No piece is selected => select the clicked piece
+        if self.checkers.board.selected is None:
+            # Clicked on an empty field
             if piece is None:
                 return
 
-            self.checkers.board.selected = piece
-            # moves = self.checkers.get_valid_moves(click_position)
-            # self.view.highlight_fields(list(moves.keys()))
-            # self.view.highlight_piece(click_position)
+            # Clicked on an opponent's piece
+            if piece.side != self.checkers.side_to_move:
+                return
 
+            self.checkers.board.selected = piece
+
+            # Highlight valid moves
             moves = self.checkers.get_valid_moves(piece)
             self.view.highlight_fields([move.to_position for move in moves.values()])
             self.view.highlight_piece(click_position)
             return
 
         moves = self.checkers.get_valid_moves(self.checkers.board.selected)
+        self.checkers.board.selected = None
 
-        # Check if move is valid
+        # Check if selected piece can move to the clicked field
         if click_position not in moves:
-            self.checkers.board.selected = None
             return
 
         # Move the piece
         self.checkers.apply_move(moves[click_position])
-        self.checkers.board.selected = None
 
         # Redraw the pieces
         self.view.draw_pieces(self.checkers.board)
-
-        # TODO:
-        # - Empty should be done differently idfk shit's ugly
-        # - the get_moves() is fucking broken
-        # - actually everything is broken gg
