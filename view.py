@@ -1,7 +1,9 @@
 ﻿from __future__ import annotations
 
+import random
 import tkinter as tk
 from dataclasses import dataclass
+from tkinter import messagebox
 
 from model import Board, Position, Side, Piece
 
@@ -43,6 +45,8 @@ class TkView:
                                  bg=self.BACKGROUND_COLOR)
         self._canvas.bind_all("<ButtonPress-1>",
                               lambda event: controller.handle_click(self._get_field_position(Coords(event.x, event.y))))
+
+        self._choose_side(controller)
 
         # Menu
         # menu = tk.Menu(self.root)
@@ -88,6 +92,7 @@ class TkView:
 
     def start_main_loop(self):
         self._canvas.pack()
+        self.side_window.mainloop()
         self._root.mainloop()
 
     # region Private methods
@@ -165,3 +170,63 @@ class TkView:
                                         canvas_coords.y + self.PIECE_SIZE + offset,
                                         fill="", outline="red", width=2)
         self._highlights_graphics.append(oval)
+
+    def _choose_side(self, controller) -> None:
+        def closed():
+            self._root.destroy()
+
+        # Setup window
+        self.side_window = tk.Toplevel()
+        self.side_window.title("Choose side")
+        self.side_window.iconbitmap("icon.ico")
+        self.side_window.attributes("-topmost", True)
+        self.side_window.resizable(False, False)
+        self.side_window.geometry("260x110")
+        self.side_window.protocol("WM_DELETE_WINDOW", closed)
+
+        label = tk.Label(self.side_window, text="Choose side", font=("Helvetica", 15))
+        label.pack()
+
+        self.black = tk.Button(
+            self.side_window,
+            text="BLACK",
+            font=("helvetica", 13),
+            bd=2,
+            background="black",
+            fg="white",
+            activeforeground="#ffffff",
+            activebackground="#444444",
+            command=lambda: assign_side(Side.BLACK)
+        )
+        self.white = tk.Button(
+            self.side_window,
+            text="WHITE",
+            font=("helvetica", 13),
+            bd=2,
+            background="white",
+            command=lambda: assign_side(Side.WHITE)
+        )
+        self.random = tk.Button(
+            self.side_window,
+            text="RANDOM",
+            font=("helvetica", 13),
+            bd=2,
+            background="gray",
+            command=lambda: assign_side(random.choice([Side.BLACK, Side.WHITE]))
+        )
+
+        self.black.place(x=10, y=50)
+        self.white.place(x=90, y=50)
+        self.random.place(x=165, y=50)
+
+        def assign_side(side: Side):
+            controller.AI_side = side.get_enemy()
+            self.draw_pieces(controller.checkers.board)
+            if controller.AI_side == Side.BLACK:
+                controller.make_AI_move()
+
+            self.side_window.destroy()
+
+    def show_winner(self, winner_side: Side) -> None:
+        self._root.unbind("<Button-1>")
+        messagebox.showinfo("Game finished", f"{winner_side} won in {0} seconds!")
