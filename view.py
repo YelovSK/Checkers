@@ -3,7 +3,7 @@
 import tkinter as tk
 from dataclasses import dataclass
 
-from model import Board, Position, PieceType, Piece
+from model import Board, Position, Side, Piece
 
 
 @dataclass
@@ -93,7 +93,7 @@ class TkView:
     # region Private methods
 
     def _draw_piece(self, piece: Piece, coords: Position) -> None:
-        if piece.piece_type == PieceType.EMPTY:
+        if piece is None:
             return
 
         color = self._get_piece_color(piece)
@@ -110,10 +110,10 @@ class TkView:
         return Coords(position.column * self.FIELD_SIZE, position.row * self.FIELD_SIZE)
 
     def _get_piece_color(self, piece: Piece) -> str | None:
-        if piece.piece_type == PieceType.EMPTY:
+        if piece is None:
             return None
 
-        return self.LIGHT_PIECE_COLOR if piece.piece_type == PieceType.WHITE else self.DARK_PIECE_COLOR
+        return self.LIGHT_PIECE_COLOR if piece.side == Side.WHITE else self.DARK_PIECE_COLOR
 
     def _get_field_color(self, position: Position) -> str:
         return self.LIGHT_FIELD_COLOR if (position.row + position.column) % 2 == 0 else self.DARK_FIELD_COLOR
