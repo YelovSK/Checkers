@@ -1,7 +1,7 @@
-﻿from controller import Controller
-from model import Checkers
-from view import TkView
+﻿from src.Controller import Controller
+from src.Game import Game
+from src.View import TkView
 
 if __name__ == '__main__':
-    controller = Controller(Checkers(), TkView())
+    controller = Controller(Game(), TkView(), ai_opponent=True)
     controller.start()

@@ -1,149 +1,20 @@
 ﻿from __future__ import annotations
 
+import datetime
 import random
-from dataclasses import dataclass
-from enum import Enum
+
+from src.model.Board import Board
+from src.model.Constants import BOARD_SIZE
+from src.model.dataclasses import Side, Position, Move, Piece
 
 
-class Side(Enum):
-    WHITE = 1
-    BLACK = 2
-
-    def get_enemy(self) -> Side:
-        if self == Side.WHITE:
-            return Side.BLACK
-        elif self == Side.BLACK:
-            return Side.WHITE
-        raise ValueError("Unknown side")
-
-
-@dataclass
-class Piece:
-    side: Side
-    position: Position
-    is_king: bool = False
-
-    def get_possible_moves(self, long_jump: bool = False) -> list[Position]:
-        """
-        :return: list of all positions 1 or 2 fields away from the piece
-        """
-        result: list[Position] = []
-        jump_length = 2 if long_jump else 1
-
-        directions: tuple[tuple[int, int], ...] = ()
-        if self.is_king:
-            directions = ((jump_length, jump_length),
-                          (jump_length, -jump_length),
-                          (-jump_length, jump_length),
-                          (-jump_length, -jump_length))
-        elif self.side == Side.WHITE:
-            directions = ((-jump_length, jump_length),
-                          (-jump_length, -jump_length))
-        elif self.side == Side.BLACK:
-            directions = ((jump_length, jump_length),
-                          (jump_length, -jump_length))
-
-        for row, column in directions:
-            position = Position(self.position.row + row, self.position.column + column)
-            if 0 <= position.row < Board.SIZE and 0 <= position.column < Board.SIZE:
-                result.append(position)
-
-        return result
-
-    def distance_from_edge(self) -> int:
-        if self.side == Side.WHITE:
-            return self.position.row
-        elif self.side == Side.BLACK:
-            return Board.SIZE - self.position.row - 1
-        raise ValueError("Unknown side")
-
-    def __hash__(self):
-        return hash(self.position)
-
-
-@dataclass
-class Position:
-    row: int
-    column: int
-
-    def __hash__(self):
-        return hash((self.row, self.column))
-
-
-@dataclass
-class Move:
-    from_piece: Piece
-    to_position: Position
-    jumped_pieces: list[Piece] = None
-
-    def becomes_king(self) -> bool:
-        return (self.from_piece.side == Side.WHITE and self.to_position.row == 0) or \
-            (self.from_piece.side == Side.BLACK and self.to_position.row == Board.SIZE - 1)
-
-    def __hash__(self):
-        return hash((self.from_piece, self.to_position))
-
-
-class Board:
-    SIZE = 8
-    ONE_SIDE_ROWS = 3
-
-    def __init__(self):
-        self._board: dict[Position, Piece | None] = {}
-        self.selected: Piece | None = None
-
-        # Place black pieces
-        for row in range(self.ONE_SIDE_ROWS):
-            for column in range(self.SIZE):
-                if (row + column) % 2 == 1:
-                    position = Position(row, column)
-                    self._board[position] = Piece(Side.BLACK, position)
-
-        # Place white pieces
-        for row in range(self.SIZE - self.ONE_SIDE_ROWS, self.SIZE):
-            for column in range(self.SIZE):
-                if (row + column) % 2 == 1:
-                    position = Position(row, column)
-                    self._board[position] = Piece(Side.WHITE, position)
-
-    def delete_piece(self, piece: Piece) -> None:
-        if piece.position in self._board:
-            del self._board[piece.position]
-
-    def set_piece(self, piece: Piece) -> None:
-        self._board[piece.position] = piece
-
-    def update_piece_position(self, piece: Piece, position: Position) -> None:
-        self.delete_piece(piece)
-        piece.position = position
-        self.set_piece(piece)
-
-    def get_piece(self, position: Position) -> Piece | None:
-        # Check if the position is on the board
-        if position.row < 0 or position.row >= self.SIZE or position.column < 0 or position.column >= self.SIZE:
-            return None
-
-        # None means that the field is empty
-        if position not in self._board:
-            return None
-
-        return self._board[position]
-
-    def get_piece_between(self, position1: Position, position2: Position) -> Piece | None:
-        row = (position1.row + position2.row) // 2
-        column = (position1.column + position2.column) // 2
-
-        return self.get_piece(Position(row, column))
-
-    def get_pieces(self, side: Side) -> list[Piece]:
-        return [piece for piece in self._board.values() if piece.side == side]
-
-
-class Checkers:
-
+class Game:
     def __init__(self):
         self.board = Board()
+        self.board.set_initial_positions()
         self.side_to_move = Side.BLACK
+        self.ai_side: Side | None = None
+        self.start_time = datetime.datetime.now()
 
     def is_move_valid(self, from_position: Position, to_position: Position) -> bool:
         from_piece = self.board.get_piece(from_position)
@@ -217,7 +88,7 @@ class Checkers:
         # Check if the piece should be crowned
         if move.from_piece.side == Side.WHITE and move.from_piece.position.row == 0:
             move.from_piece.is_king = True
-        elif move.from_piece.side == Side.BLACK and move.from_piece.position.row == Board.SIZE - 1:
+        elif move.from_piece.side == Side.BLACK and move.from_piece.position.row == BOARD_SIZE - 1:
             move.from_piece.is_king = True
 
         self.next_move()
@@ -301,4 +172,62 @@ class Checkers:
         if not self.board.get_pieces(Side.BLACK):
             return Side.WHITE
 
+        if not self.get_all_valid_moves(Side.WHITE):
+            return Side.BLACK
+
+        if not self.get_all_valid_moves(Side.BLACK):
+            return Side.WHITE
+
         return None
+
+    def get_game_time_seconds(self) -> int:
+        return (datetime.datetime.now() - self.start_time).seconds
+
+    def load_save_state(self, save):
+        self.board = save.board
+        self.side_to_move = save.current_turn
+        self.ai_side = save.ai_side
+        self.start_time = datetime.datetime.now() - datetime.timedelta(seconds=save.game_time_seconds)
+
+    def is_ai_turn(self) -> bool:
+        return self.side_to_move == self.ai_side
+
+    def make_move(self, position: Position) -> None:
+        moves = self.get_valid_moves(self.board.selected)
+        self.board.selected = None
+
+        # No valid moves => opponent wins
+        if len(moves) == 0:
+            return
+
+        # Check if selected piece can move to the clicked field
+        if position not in moves:
+            return
+
+        # Move the piece
+        self.apply_move(moves[position])
+
+    def select_piece(self, position: Position) -> list[Position]:
+        """
+        :param position: which piece to select
+        :return: list of possible moves for the selected piece
+        """
+        piece = self.board.get_piece(position)
+
+        # Empty field
+        if piece is None:
+            return []
+
+        # Opponent's piece
+        if piece.side != self.side_to_move:
+            return []
+
+        self.board.selected = piece
+
+        moves = self.get_valid_moves(piece)
+        return [move.to_position for move in moves.values()]
+
+    def make_best_move(self):
+        moves = self.get_all_valid_moves(self.side_to_move)
+        move = self.get_best_move(moves)
+        self.apply_move(move)
