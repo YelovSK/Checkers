@@ -16,11 +16,6 @@ class SaveResult:
 class SaveParser:
     SAVES_FOLDER = "save"
 
-    WHITE = "w"
-    BLACK = "b"
-    WHITE_KING = "W"
-    BLACK_KING = "B"
-
     @staticmethod
     def create_saves_folder():
         if not os.path.exists(SaveParser.SAVES_FOLDER):

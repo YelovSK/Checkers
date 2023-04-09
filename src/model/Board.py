@@ -44,7 +44,7 @@ class Board:
         if position.row < 0 or position.row >= BOARD_SIZE or position.column < 0 or position.column >= BOARD_SIZE:
             return None
 
-        # None means that the field is empty
+        # Empty field
         if position not in self._board:
             return None
 

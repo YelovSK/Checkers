@@ -11,9 +11,11 @@ from src.model.dataclasses.Coords import Coords
 
 
 class TkView:
-    WINDOWS_SIZE = 500
-    FIELD_SIZE = WINDOWS_SIZE / BOARD_SIZE
+    WINDOW_SIZE = 500
+    FIELD_SIZE = WINDOW_SIZE / BOARD_SIZE
     PIECE_SIZE = FIELD_SIZE * 0.8
+
+    ICON_FILE = "icon.ico"
 
     LIGHT_FIELD_COLOR = "#ffceaf"
     DARK_FIELD_COLOR = "#a34911"
@@ -23,8 +25,8 @@ class TkView:
     DARK_PIECE_COLOR = "#000000"
 
     def __init__(self):
-        self._root = None
-        self._canvas = None
+        self._root: tk.Tk | None = None
+        self._canvas: tk.Canvas | None = None
 
         # Canvas objects
         self._highlights_graphics: list[int] = []
@@ -34,11 +36,11 @@ class TkView:
         # Root
         self._root = tk.Tk()
         self._root.title("Checkers")
-        self._root.iconbitmap("icon.ico")
+        self._root.iconbitmap(self.ICON_FILE)
         self._root.resizable(False, False)
 
         # Canvas
-        self._canvas = tk.Canvas(self._root, width=self.WINDOWS_SIZE, height=self.WINDOWS_SIZE,
+        self._canvas = tk.Canvas(self._root, width=self.WINDOW_SIZE, height=self.WINDOW_SIZE,
                                  bg=self.BACKGROUND_COLOR)
         self._canvas.bind_all("<ButtonPress-1>",
                               lambda event: controller.handle_click(self._get_field_position(Coords(event.x, event.y))))
@@ -54,66 +56,15 @@ class TkView:
         sub_menu.add_command(label="Restart", command=controller.restart)
         sub_menu.add_command(label="Exit", command=exit)
 
-    def draw_board(self) -> None:
-        self._canvas.delete("all")
-        for row in range(BOARD_SIZE):
-            for col in range(BOARD_SIZE):
-                color = self._get_field_color(Position(row, col))
-                canvas_coords = self._get_field_coords(Position(row, col))
-
-                self._canvas.create_rectangle(canvas_coords.x, canvas_coords.y,
-                                              canvas_coords.x + self.FIELD_SIZE,
-                                              canvas_coords.y + self.FIELD_SIZE,
-                                              fill=color, outline="")
-
-        self._canvas.update()
-
-    def draw_pieces(self, board: Board) -> None:
-        self._clear_pieces_graphics()
-
-        for row in range(BOARD_SIZE):
-            for col in range(BOARD_SIZE):
-                piece = board.get_piece(Position(row, col))
-                self._draw_piece(piece, Position(row, col))
-
-        self._canvas.update()
-
-    def start_main_loop(self):
-        self._canvas.pack()
-        self._root.mainloop()
-
-    def highlight_fields(self, positions: list[Position]) -> None:
-        for position in positions:
-            canvas_coords = self._get_field_coords(position)
-
-            rectangle = self._canvas.create_rectangle(canvas_coords.x, canvas_coords.y,
-                                                      canvas_coords.x + self.FIELD_SIZE,
-                                                      canvas_coords.y + self.FIELD_SIZE,
-                                                      fill="", outline="red", width=3)
-            self._highlights_graphics.append(rectangle)
-
-    def highlight_piece(self, position: Position) -> None:
-        canvas_coords = self._get_field_coords(position)
-        offset = (self.FIELD_SIZE - self.PIECE_SIZE) / 2
-
-        oval = self._canvas.create_oval(canvas_coords.x + offset, canvas_coords.y + offset,
-                                        canvas_coords.x + self.PIECE_SIZE + offset,
-                                        canvas_coords.y + self.PIECE_SIZE + offset,
-                                        fill="", outline="red", width=2)
-        self._highlights_graphics.append(oval)
-
-    def choose_side(self) -> Side:
-        def closed():
-            self._root.destroy()
-
+    def open_choose_side_window(self) -> Side:
         # Setup window
         window = tk.Toplevel()
         window.title("Choose side")
-        window.iconbitmap("icon.ico")
+        window.iconbitmap(self.ICON_FILE)
         window.attributes("-topmost", True)
         window.resizable(False, False)
         window.geometry("260x110")
-        window.protocol("WM_DELETE_WINDOW", closed)
+        window.protocol("WM_DELETE_WINDOW", lambda: self._root.destroy())
 
         label = tk.Label(window, text="Choose side", font=("Helvetica", 15))
         label.pack()
@@ -163,11 +114,60 @@ class TkView:
         window.wait_window()
         return result
 
+    def start_main_loop(self):
+        self._canvas.pack()
+        self._root.mainloop()
+
+    def draw_board(self) -> None:
+        self._canvas.delete("all")
+
+        for row in range(BOARD_SIZE):
+            for col in range(BOARD_SIZE):
+                color = self._get_field_color(Position(row, col))
+                canvas_coords = self._get_field_coords(Position(row, col))
+
+                self._canvas.create_rectangle(canvas_coords.x, canvas_coords.y,
+                                              canvas_coords.x + self.FIELD_SIZE,
+                                              canvas_coords.y + self.FIELD_SIZE,
+                                              fill=color, outline="")
+
+        self._canvas.update()
+
+    def draw_pieces(self, board: Board) -> None:
+        self._clear_pieces_graphics()
+
+        for row in range(BOARD_SIZE):
+            for col in range(BOARD_SIZE):
+                piece = board.get_piece(Position(row, col))
+                self._draw_piece(piece, Position(row, col))
+
+        self._canvas.update()
+
+    def highlight_fields(self, positions: list[Position]) -> None:
+        for position in positions:
+            canvas_coords = self._get_field_coords(position)
+
+            rectangle = self._canvas.create_rectangle(canvas_coords.x, canvas_coords.y,
+                                                      canvas_coords.x + self.FIELD_SIZE,
+                                                      canvas_coords.y + self.FIELD_SIZE,
+                                                      fill="", outline="red", width=3)
+            self._highlights_graphics.append(rectangle)
+
+    def highlight_piece(self, position: Position) -> None:
+        canvas_coords = self._get_field_coords(position)
+        offset = (self.FIELD_SIZE - self.PIECE_SIZE) / 2
+
+        oval = self._canvas.create_oval(canvas_coords.x + offset, canvas_coords.y + offset,
+                                        canvas_coords.x + self.PIECE_SIZE + offset,
+                                        canvas_coords.y + self.PIECE_SIZE + offset,
+                                        fill="", outline="red", width=2)
+        self._highlights_graphics.append(oval)
+
     def show_winner(self, winner_side: Side, seconds: int) -> None:
         self._root.unbind("<Button-1>")
         messagebox.showinfo("Game finished", f"{winner_side.name} won in {seconds} seconds!")
 
-    def prompt_save(self, folder: str) -> str:
+    def open_save_dialog(self, folder: str) -> str:
         load_file = filedialog.asksaveasfile(
             mode="w", initialdir=folder, title="Save game",
             filetypes=[("Text files", "*.txt")],
@@ -175,7 +175,7 @@ class TkView:
 
         return load_file.name if load_file is not None else None
 
-    def prompt_load(self, folder: str) -> str:
+    def open_load_dialog(self, folder: str) -> str:
         save_file = filedialog.askopenfilename(
             initialdir=folder, title='Load game',
             filetypes=[('Text files', '*.txt')])
@@ -235,7 +235,10 @@ class TkView:
         return self.LIGHT_PIECE_COLOR if piece.side == Side.WHITE else self.DARK_PIECE_COLOR
 
     def _get_field_color(self, position: Position) -> str:
-        return self.LIGHT_FIELD_COLOR if (position.row + position.column) % 2 == 0 else self.DARK_FIELD_COLOR
+        if (position.row + position.column) % 2 == 0:
+            return self.LIGHT_FIELD_COLOR
+        else:
+            return self.DARK_FIELD_COLOR
 
     def _get_field_position(self, coords: Coords) -> Position:
         return Position(int(coords.y // self.FIELD_SIZE), int(coords.x // self.FIELD_SIZE))

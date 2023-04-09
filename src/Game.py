@@ -4,11 +4,11 @@ import datetime
 import random
 
 from src.model.Board import Board
-from src.model.Constants import BOARD_SIZE
 from src.model.dataclasses import Side, Position, Move, Piece
 
 
 class Game:
+
     def __init__(self):
         self.board = Board()
         self.board.set_initial_positions()
@@ -86,10 +86,7 @@ class Game:
             self.board.delete_piece(piece)
 
         # Check if the piece should be crowned
-        if move.from_piece.side == Side.WHITE and move.from_piece.position.row == 0:
-            move.from_piece.is_king = True
-        elif move.from_piece.side == Side.BLACK and move.from_piece.position.row == BOARD_SIZE - 1:
-            move.from_piece.is_king = True
+        move.from_piece.is_king = move.becomes_king()
 
         self.next_move()
 
@@ -166,16 +163,12 @@ class Game:
         return random.choice(moves)
 
     def get_winner(self) -> Side | None:
-        if not self.board.get_pieces(Side.WHITE):
+        # No remaining pieces or no valid moves for white
+        if not self.board.get_pieces(Side.WHITE) or not self.get_all_valid_moves(Side.WHITE):
             return Side.BLACK
 
-        if not self.board.get_pieces(Side.BLACK):
-            return Side.WHITE
-
-        if not self.get_all_valid_moves(Side.WHITE):
-            return Side.BLACK
-
-        if not self.get_all_valid_moves(Side.BLACK):
+        # No remaining pieces or no valid moves for black
+        if not self.board.get_pieces(Side.BLACK) or not self.get_all_valid_moves(Side.BLACK):
             return Side.WHITE
 
         return None
@@ -193,6 +186,9 @@ class Game:
         return self.side_to_move == self.ai_side
 
     def make_move(self, position: Position) -> None:
+        """
+        Moves the selected piece to the given position
+        """
         moves = self.get_valid_moves(self.board.selected)
         self.board.selected = None
 
@@ -200,12 +196,9 @@ class Game:
         if len(moves) == 0:
             return
 
-        # Check if selected piece can move to the clicked field
-        if position not in moves:
-            return
-
-        # Move the piece
-        self.apply_move(moves[position])
+        # Move if the move is valid
+        if position in moves:
+            self.apply_move(moves[position])
 
     def select_piece(self, position: Position) -> list[Position]:
         """

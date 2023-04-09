@@ -23,7 +23,7 @@ class Controller:
         self.view.start_main_loop()
 
     def save(self):
-        file_path = self.view.prompt_save(SaveParser.SAVES_FOLDER)
+        file_path = self.view.open_save_dialog(SaveParser.SAVES_FOLDER)
         if file_path is None:
             return
 
@@ -35,10 +35,9 @@ class Controller:
                             file_path)
         except Exception as e:
             self.view.show_error(repr(e))
-            return
 
     def load(self):
-        file_name = self.view.prompt_load(SaveParser.SAVES_FOLDER)
+        file_name = self.view.open_load_dialog(SaveParser.SAVES_FOLDER)
         if file_name == "":
             return
 
@@ -52,7 +51,6 @@ class Controller:
             return
 
         self.game.load_save_state(save)
-
         self.is_ai_opponent = self.game.ai_side is not None
 
         self.view.clear_highlights()
@@ -78,7 +76,7 @@ class Controller:
     # region Private methods
 
     def _choose_side(self):
-        self.game.ai_side = self.view.choose_side().get_enemy()
+        self.game.ai_side = self.view.open_choose_side_window().get_enemy()
         if self.game.ai_side.is_first_to_move():
             self._make_ai_move_delayed()
 
@@ -96,7 +94,6 @@ class Controller:
             if len(valid_moves) > 0:
                 self.view.highlight_fields(valid_moves)
                 self.view.highlight_piece(click_position)
-            return
         # Some piece is selected => try to move it to the clicked position
         else:
             self.game.make_move(click_position)
