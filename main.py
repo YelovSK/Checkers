@@ -1,8 +1,8 @@
 ﻿import sys
 
-from src.Controller import Controller
-from src.Game import Game
-from src.View import TkView
+from src.controller import GameController
+from src.model import Game
+from src.view import MainWindow
 
 
 def get_ai_opponent_arg():
@@ -13,5 +13,5 @@ def get_ai_opponent_arg():
 
 
 if __name__ == '__main__':
-    controller = Controller(Game(), TkView(), ai_opponent=get_ai_opponent_arg())
+    controller = GameController(Game(), MainWindow(), ai_opponent=get_ai_opponent_arg())
     controller.start()

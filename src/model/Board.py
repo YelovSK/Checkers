@@ -1,6 +1,6 @@
 ﻿from __future__ import annotations
 
-from src.model.Constants import BOARD_SIZE
+from src.model.constants import BOARD_SIZE
 from src.model.dataclasses import Position, Piece, Side
 
 

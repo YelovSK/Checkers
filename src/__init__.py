@@ -1,3 +1,3 @@
-﻿from .Controller import Controller
-from .View import TkView
-from .Game import Game
+﻿from src.controller.GameController import GameController
+from src.view.MainWindow import MainWindow
+from src.model.Game import Game

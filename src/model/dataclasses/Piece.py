@@ -1,7 +1,7 @@
 ﻿from dataclasses import dataclass
 
-from src.model.Constants import BOARD_SIZE
-from src.model.dataclasses.Position import Position
+from src.model.constants import BOARD_SIZE
+from src.model.dataclasses import Position
 from src.model.dataclasses.Side import Side
 
 
@@ -24,6 +24,7 @@ class Piece:
         jump_length = 2 if long_jump else 1
 
         directions: tuple[tuple[int, int], ...] = ()
+
         if self.is_king:
             directions = ((jump_length, jump_length),
                           (jump_length, -jump_length),

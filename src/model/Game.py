@@ -3,7 +3,7 @@
 import datetime
 import random
 
-from src.model.Board import Board
+from src.model import Board
 from src.model.dataclasses import Side, Position, Move, Piece
 
 

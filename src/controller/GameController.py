@@ -1,13 +1,14 @@
 ﻿from __future__ import annotations
 
-from src.Game import Game
-from src.View import TkView
-from src.model.SaveParser import SaveParser, SaveResult
+from src.model import Game, SaveParser, SaveResult
 from src.model.dataclasses import Position
+from src.view import MainWindow, SideWindow
 
 
-class Controller:
-    def __init__(self, checkers: Game, view: TkView, ai_opponent: bool):
+class GameController:
+    AI_MOVE_DELAY_MS = 500
+
+    def __init__(self, checkers: Game, view: MainWindow, ai_opponent: bool):
         self.game = checkers
         self.view = view
         self.is_ai_opponent = ai_opponent
@@ -76,13 +77,14 @@ class Controller:
     # region Private methods
 
     def _choose_side(self):
-        self.game.ai_side = self.view.open_choose_side_window().get_enemy()
+        window = SideWindow()
+        side = window.wait_for_result()
+        self.game.ai_side = side.get_enemy()
         if self.game.ai_side.is_first_to_move():
             self._make_ai_move_delayed()
 
     def _make_ai_move_delayed(self):
-        DELAY_MS = 500
-        self.view._canvas.after(DELAY_MS, self._make_ai_move)
+        self.view._canvas.after(self.AI_MOVE_DELAY_MS, self._make_ai_move)
 
     def _make_user_move(self, click_position: Position):
         if self.game.is_ai_turn():

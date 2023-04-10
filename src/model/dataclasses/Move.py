@@ -1,6 +1,6 @@
 ﻿from dataclasses import dataclass
 
-from src.model.Constants import BOARD_SIZE
+from src.model.constants import BOARD_SIZE
 from src.model.dataclasses import Piece, Position, Side
 
 

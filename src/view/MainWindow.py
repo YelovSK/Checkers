@@ -1,16 +1,14 @@
 ﻿from __future__ import annotations
 
-import random
 import tkinter as tk
 from tkinter import messagebox, filedialog
 
-from src.model.Board import Board
-from src.model.Constants import BOARD_SIZE
-from src.model.dataclasses import Position, Side, Piece
-from src.model.dataclasses.Coords import Coords
+from src.model import Board
+from src.model.constants import BOARD_SIZE
+from src.model.dataclasses import Position, Side, Piece, Coords
 
 
-class TkView:
+class MainWindow(tk.Tk):
     WINDOW_SIZE = 500
     FIELD_SIZE = WINDOW_SIZE / BOARD_SIZE
     PIECE_SIZE = FIELD_SIZE * 0.8
@@ -25,7 +23,7 @@ class TkView:
     DARK_PIECE_COLOR = "#000000"
 
     def __init__(self):
-        self._root: tk.Tk | None = None
+        super().__init__()
         self._canvas: tk.Canvas | None = None
 
         # Canvas objects
@@ -34,89 +32,31 @@ class TkView:
 
     def setup(self, controller) -> None:
         # Root
-        self._root = tk.Tk()
-        self._root.title("Checkers")
-        self._root.iconbitmap(self.ICON_FILE)
-        self._root.resizable(False, False)
+        self.title("Checkers")
+        self.iconbitmap(self.ICON_FILE)
+        self.resizable(False, False)
 
         # Canvas
-        self._canvas = tk.Canvas(self._root, width=self.WINDOW_SIZE, height=self.WINDOW_SIZE,
+        self._canvas = tk.Canvas(self, width=self.WINDOW_SIZE, height=self.WINDOW_SIZE,
                                  bg=self.BACKGROUND_COLOR)
         self._canvas.bind_all("<ButtonPress-1>",
                               lambda event: controller.handle_click(self._get_field_position(Coords(event.x, event.y))))
+        self._canvas.pack()
 
         # Menu
-        menu = tk.Menu(self._root)
-        self._root.config(menu=menu)
-        sub_menu = tk.Menu(menu, tearoff=0)
-        menu.add_cascade(label="File", menu=sub_menu)
+        menu = tk.Menu(self)
+        self.config(menu=menu)
 
+        sub_menu = tk.Menu(menu, tearoff=0)
         sub_menu.add_command(label="Save", command=controller.save)
         sub_menu.add_command(label="Load", command=controller.load)
         sub_menu.add_command(label="Restart", command=controller.restart)
         sub_menu.add_command(label="Exit", command=exit)
 
-    def open_choose_side_window(self) -> Side:
-        # Setup window
-        window = tk.Toplevel()
-        window.title("Choose side")
-        window.iconbitmap(self.ICON_FILE)
-        window.attributes("-topmost", True)
-        window.resizable(False, False)
-        window.geometry("260x110")
-        window.protocol("WM_DELETE_WINDOW", lambda: self._root.destroy())
-
-        label = tk.Label(window, text="Choose side", font=("Helvetica", 15))
-        label.pack()
-
-        button_properties = {
-            "font": ("helvetica", 13),
-            "bd": 2,
-            "master": window,
-        }
-
-        black_button = tk.Button(
-            **button_properties,
-            text="BLACK",
-            background="black",
-            fg="white",
-            activeforeground="#ffffff",
-            activebackground="#444444",
-            command=lambda: assign_side(Side.BLACK)
-        )
-
-        white_button = tk.Button(
-            **button_properties,
-            text="WHITE",
-            background="white",
-            command=lambda: assign_side(Side.WHITE)
-        )
-
-        random_button = tk.Button(
-            **button_properties,
-            text="RANDOM",
-            background="gray",
-            command=lambda: assign_side(random.choice([Side.BLACK, Side.WHITE]))
-        )
-
-        black_button.place(x=10, y=50)
-        white_button.place(x=90, y=50)
-        random_button.place(x=165, y=50)
-
-        result: Side = Side.WHITE
-
-        def assign_side(side: Side):
-            nonlocal result
-
-            result = side
-            window.destroy()
-
-        window.wait_window()
-        return result
+        menu.add_cascade(label="File", menu=sub_menu)
 
     def start_main_loop(self):
-        self._canvas.pack()
-        self._root.mainloop()
+        self.mainloop()
 
     def draw_board(self) -> None:
         self._canvas.delete("all")
@@ -164,7 +104,7 @@ class TkView:
         self._highlights_graphics.append(oval)
 
     def show_winner(self, winner_side: Side, seconds: int) -> None:
-        self._root.unbind("<Button-1>")
+        self.unbind("<Button-1>")
         messagebox.showinfo("Game finished", f"{winner_side.name} won in {seconds} seconds!")
 
     def open_save_dialog(self, folder: str) -> str:
@@ -218,11 +158,12 @@ class TkView:
         if not piece.is_king:
             return
 
+        font_size = int(30 * (self.WINDOW_SIZE / 500))
         crown = self._canvas.create_text(canvas_coords.x + self.FIELD_SIZE / 2,
                                          canvas_coords.y + self.FIELD_SIZE / 2,
                                          text="♔",
                                          fill=self.DARK_PIECE_COLOR if piece.side == Side.WHITE else self.LIGHT_PIECE_COLOR,
-                                         font="helvetica 30")
+                                         font=f"helvetica {font_size}")
         self._pieces_graphics.append(crown)
 
     def _get_field_coords(self, position: Position) -> Coords:

@@ -440,7 +440,7 @@ class Board():
             if not (x+y) % 2:   # klikol som na svetle
                 return False
 
-        if selected.side == 'black':
+        if selected.result == 'black':
             if selected.y == 7 and not selected.king:
                 return False
             shift = (1,)
@@ -491,7 +491,7 @@ class Board():
                         if move:
                             x, y = move[0][0], move[0][1]
                             moves[move[0]] = [move[1]]+prev
-                            pom = self.board[x][y] = Piece(field.side, (x, y), self.rect_size, field.king)
+                            pom = self.board[x][y] = Piece(field.result, (x, y), self.rect_size, field.king)
                             long_jump(pom, prev+[move[1]])  # ak mozem skocit: pridaj tah a ci mozem z toho noveho dalej skocit
                             pom.delete()
                             del pom
@@ -527,14 +527,14 @@ class Board():
         x, y = piece.x, piece.y
         if x in (0, 7) or y in (0, 7):
             return False
-        opponent = 'white' if piece.side == 'black' else 'black'
+        opponent = 'white' if piece.result == 'black' else 'black'
         out = []
         for i in (-1, 1):
             for j in (-1, 1):
                 op = self.board[x+i][y+j]  # ten co ohrozuje
                 if op and op.side == opponent and not self.board[x-i][y-j]:   # ci je prazdny na druhej strane
                     if not op.king:
-                        if not (piece.side == 'white' and op.y > piece.y) and not (piece.side == 'black' and op.y < piece.y):
+                        if not (piece.result == 'white' and op.y > piece.y) and not (piece.result == 'black' and op.y < piece.y):
                             out.append((x+i, y+j))
                     else:
                         out.append((x+i, y+j))   # coords toho co ohrozuje
