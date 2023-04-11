@@ -30,7 +30,7 @@ class SaveParser:
 
         with open(file_path) as f:
             current_turn = getattr(Side, f.readline().strip())
-            ai_side = getattr(Side, f.readline().strip())
+            ai_side = getattr(Side, f.readline().strip(), None)
             game_time_seconds = int(f.readline().strip())
             pieces_str = f.readline().strip().split(" ")
             for piece_str in pieces_str:

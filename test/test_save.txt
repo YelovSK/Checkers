@@ -1,0 +1,4 @@
+BLACK
+
+18
+b01 b03 b05 b07 b10 b12 b14 b16 b21 b23 b25 b27 w50 w52 w54 w56 w61 w63 w65 w67 w70 w72 w74 w76
